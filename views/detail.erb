@@ -1,0 +1,15 @@
+<section class="section wrapper">
+    <label for="title" class="form-label">タイトル</label>
+    <h2 class="form-control" id="title"><%= h(@title) %></h2>
+    <label for="content" class="form-label">内容</label>
+    <p class="form-control" id="content"><%= h(@content) %></p>
+</section>
+<div class="btn-position wrapper">
+    <form method="get" action="/memos/<%= h(params[:id]) %>/edit">
+        <input type="submit" value="編集" class="button">
+    </form>
+    <form method="post" action="/memos/<%= h(params[:id]) %>">
+        <input type="hidden" name="_method" value="delete">
+        <input type="submit" value="削除" class="button">
+    </form>
+</div>
