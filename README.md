@@ -26,7 +26,45 @@ GitHubからこのリポジトリをクローンしてください。
 bundle install
 ```
 
-### 5. アプリケーションの起動
+### 5. PostgreSQLインストール
+PostgreSQLが未インストールの場合、以下のコマンドを実行し、インストールしてください。
+```
+sudo apt install postgresql-16
+```
+また、```libpq-dev```も一緒にインストールします。
+```
+sudo apt install libpq-dev
+```
+
+### 6. ユーザ切り替え
+postgresユーザに切り替えて、データベースとテーブルを作成します
+```
+sudo su postgres
+```
+
+### 7. DBの作成
+以下のコマンドを実行し、memosDBを作成します。
+```
+psql -f db/create_db.sql
+```
+
+### 8. memosTABLEの作成
+以下のコマンドを実行し、memosTABLEを作成します。
+```
+psql -d memos -f db/create_table.sql
+```
+
+### 9. PostgreSQLサービスの再起動
+以下のコマンドを実行し、PostgreSQLサービスを再起動する。
+```
+sudo service postgresql restart
+exit
+```
+
+### 10. DB接続情報の修正
+memo.rbのconnect_dbメソッド内のDB接続情報（user, password）を修正する。
+
+### 11. アプリケーションの起動
 ```memo.rb```を使って、Sinatraサーバを起動します。
 以下のコマンドを実行します。
 
@@ -34,14 +72,14 @@ bundle install
 ruby memo.rb -p 4567
 ```
 
-### 6. アプリケーションへのアクセス
+### 12. アプリケーションへのアクセス
 ブラウザを開いて、以下のURLにアクセスしてください。
 
 ```
 http://localhost:4567
 ```
 
-### 7. アプリケーションの停止
+### 13. アプリケーションの停止
 ```CTRL``` + ```c```で停止してください。
 
 ## アプリケーションの使用方法
@@ -61,8 +99,3 @@ http://localhost:4567
 
 ### 5. メモの一覧ページへの戻り方
 全てのページで、画面左上のメモアプリを押下すると、メモ一覧ページに移動できます。
-
-
-## 注意事項
-- メモの内容は、ローカルの```public/memos.json```ファイルに保存されます。
-このファイルは直接編集しないでください。
