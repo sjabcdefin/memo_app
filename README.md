@@ -57,14 +57,24 @@ psql -d memos -f db/create_table.sql
 ### 9. PostgreSQLサービスの再起動
 以下のコマンドを実行し、PostgreSQLサービスを再起動する。
 ```
-sudo service postgresql restart
+service postgresql restart
+```
+
+### 10. ユーザ切り替え
+postgresユーザから元のユーザに切り替える
+```
 exit
 ```
 
-### 10. DB接続情報の修正
+### 11. DB接続情報の修正
 memo.rbのconnect_dbメソッド内のDB接続情報（user, password）を修正する。
+```
+def connect_db
+  PG.connect(dbname: 'memos', user: 'user_name', password: 'user_password')
+end
+```
 
-### 11. アプリケーションの起動
+### 12. アプリケーションの起動
 ```memo.rb```を使って、Sinatraサーバを起動します。
 以下のコマンドを実行します。
 
@@ -72,14 +82,14 @@ memo.rbのconnect_dbメソッド内のDB接続情報（user, password）を修�
 ruby memo.rb -p 4567
 ```
 
-### 12. アプリケーションへのアクセス
+### 13. アプリケーションへのアクセス
 ブラウザを開いて、以下のURLにアクセスしてください。
 
 ```
 http://localhost:4567
 ```
 
-### 13. アプリケーションの停止
+### 14. アプリケーションの停止
 ```CTRL``` + ```c```で停止してください。
 
 ## アプリケーションの使用方法
