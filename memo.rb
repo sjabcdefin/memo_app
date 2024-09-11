@@ -3,16 +3,40 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'json'
+require 'pg'
 
-FILE_PATH = 'public/memos.json'
-
-def load_memos(file_path)
-  File.open(file_path) { |file| JSON.parse(file.read) }
+def connect_db
+  PG.connect(dbname: 'memos', user: 'user_name', password: 'user_password')
 end
 
-def save_memos(file_path, memos)
-  File.open(file_path, 'w') { |file| JSON.dump(memos, file) }
+def close_db(conn)
+  conn.close
+end
+
+def load_all_memos(conn)
+  conn.exec('SELECT * FROM memos')
+end
+
+def load_memo(conn, id)
+  result = conn.exec_params('SELECT * FROM memos WHERE id = $1', [id])
+  if result.ntuples.zero?
+    nil
+  else
+    result[0]
+  end
+end
+
+def create_memo(conn, title, content)
+  conn.exec_params('INSERT INTO memos (title, content) VALUES ($1, $2)', [title, content])
+end
+
+def delete_memo(conn, id)
+  conn.exec_params('DELETE FROM memos WHERE id = $1', [id])
+end
+
+def update_memo(conn, id, title, content)
+  result = conn.exec_params('UPDATE memos SET title = $2, content =$3 WHERE id = $1', [id, title, content])
+  result.cmd_tuples
 end
 
 helpers do
@@ -26,8 +50,10 @@ get '/' do
 end
 
 get '/memos' do
-  @memos = load_memos(FILE_PATH)
+  conn = connect_db
+  @memos = load_all_memos(conn)
   @current_page = 'index'
+  close_db(conn)
   erb :index
 end
 
@@ -36,8 +62,9 @@ get '/memos/new' do
 end
 
 get '/memos/:id' do
-  memos = load_memos(FILE_PATH)
-  selected_memo = memos['memos'].find { |memo| params[:id].to_i == memo['id'] }
+  conn = connect_db
+  selected_memo = load_memo(conn, params[:id].to_i)
+  close_db(conn)
 
   if selected_memo
     @title = selected_memo['title']
@@ -49,8 +76,9 @@ get '/memos/:id' do
 end
 
 get '/memos/:id/edit' do
-  memos = load_memos(FILE_PATH)
-  selected_memo = memos['memos'].find { |memo| params[:id].to_i == memo['id'] }
+  conn = connect_db
+  selected_memo = load_memo(conn, params[:id].to_i)
+  close_db(conn)
 
   if selected_memo
     @title = selected_memo['title']
@@ -62,38 +90,27 @@ get '/memos/:id/edit' do
 end
 
 post '/memos' do
-  title = params[:title]
-  content = params[:content]
-
-  memos = load_memos(FILE_PATH)
-  id = memos['memos'].empty? ? 1 : memos['memos'][-1]['id'] + 1
-  memos['memos'] << { 'id' => id, 'title' => title, 'content' => content }
-  save_memos(FILE_PATH, memos)
+  conn = connect_db
+  create_memo(conn, params[:title], params[:content])
+  close_db(conn)
 
   redirect '/memos'
 end
 
 delete '/memos/:id' do
-  memos = load_memos(FILE_PATH)
-  selected_memo = memos['memos'].find { |memo| params[:id].to_i == memo['id'] }
+  conn = connect_db
+  delete_memo(conn, params[:id].to_i)
+  close_db(conn)
 
-  memos['memos'].delete(selected_memo) if selected_memo
-
-  save_memos(FILE_PATH, memos)
   redirect '/memos'
 end
 
 patch '/memos/:id' do
-  title = params[:title]
-  content = params[:content]
+  conn = connect_db
+  update_rows = update_memo(conn, params[:id].to_i, params[:title], params[:content])
+  close_db(conn)
 
-  memos = load_memos(FILE_PATH)
-  selected_memo = memos['memos'].find { |memo| params[:id].to_i == memo['id'] }
-
-  if selected_memo
-    selected_memo['title'] = title
-    selected_memo['content'] = content
-    save_memos(FILE_PATH, memos)
+  if update_rows.positive?
     redirect "/memos/#{params[:id]}"
   else
     404
